@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL 参数修改器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        textarea {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        input[type="text"] {
+            width: calc(100% - 12px);
+        }
+        .param-container {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>URL 参数修改器</h1>
+    <textarea id="urlInput" rows="6" placeholder="请输入URL"></textarea><br>
+    <div id="paramsContainer"></div>
+    <div class="param-container">
+        <label>直玩URL (sample): </label>
+        <input type="text" id="sampleInput" placeholder="默认为输入url，可输入更改" />
+    </div>
+    <button onclick="modifyUrl()">修改URL</button>
+    <h2>修改后的URL:</h2>
+    <textarea id="modifiedUrl" rows="6" readonly></textarea>
+
+    <script>
+        function base64Encode(str) {
+            return btoa(unescape(encodeURIComponent(str)));
+        }
+
+        function urlEncode(str) {
+            return encodeURIComponent(str);
+        }
+
+        function parseParams(url) {
+            const params = new URLSearchParams(url.split('?')[1]);
+            return params;
+        }
+
+        function updateParamsDisplay(params) {
+            const container = document.getElementById('paramsContainer');
+            container.innerHTML = ''; // 清空容器
+            for (const [key, value] of params.entries()) {
+                const div = document.createElement('div');
+                div.className = 'param-container';
+                div.innerHTML = `<label>${key}:</label> <input type="text" value="${value}" onchange="updateParam('${key}', this.value)" />`;
+                container.appendChild(div);
+            }
+        }
+
+        function updateParam(key, value) {
+            paramMap[key] = value;
+        }
+
+        let paramMap = {};
+
+        function modifyUrl() {
+            let url = document.getElementById('urlInput').value;
+            paramMap = {}; // 重置参数Map
+
+            // 解析参数
+            let urlParams = parseParams(url);
+            urlParams.forEach((value, key) => {
+                paramMap[key] = value;
+            });
+
+            // 获取 sample 和 vertical 值
+            const sample = document.getElementById('sampleInput').value || url; // 默认填入url
+            const vertical = 1; // 默认竖屏参数为1
+
+            // 生成JSONObject并进行编码
+            let jsonObject = JSON.stringify({ sample: sample, vertical: vertical });
+            let ad_ext = urlEncode(base64Encode(jsonObject));
+
+            // 新增ad_ext参数
+            urlParams.set('ad_ext', ad_ext);
+
+            // 更新参数
+            for (const key in paramMap) {
+                if (paramMap.hasOwnProperty(key)) {
+                    urlParams.set(key, paramMap[key]);
+                }
+            }
+
+            // 生成最终的URL
+            let modifiedUrl = url.split('?')[0] + '?' + urlParams.toString();
+            document.getElementById('modifiedUrl').value = modifiedUrl;
+
+            // 更新参数展示
+            updateParamsDisplay(urlParams);
+        }
+    </script>
+</body>
+</html>
